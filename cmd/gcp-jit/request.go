@@ -22,11 +22,19 @@ var requestCmd = &cobra.Command{
 
 		pam, err := pamjit.NewPamJitClient(context.Background(), projectID, location)
 		if err != nil {
-			log.Fatalf("unable to use GCP JIT service: %v", err)
+			log.Fatalf("Unable to use GCP JIT service: %v", err)
 		}
-		err = pam.RequestGrant(cmd.Context(), entitlementID, justification, duration)
+		link, err := pam.RequestGrant(cmd.Context(), entitlementID, justification, duration)
 		if err != nil {
 			fmt.Printf("Error requesting entitlement: %v\n", err)
+		} else {
+			// send the link to Slack and if it fails (e.g. env vars not set), then display the link
+			if link != "" {
+				err = sendSlackMessage(link)
+				if err != nil {
+					fmt.Printf("Link to request: %s\n", link)
+				}
+			}
 		}
 	},
 }
