@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	
+
 	"github.com/felixgborrego/gpc-pam-jit/pkg/config"
 	"github.com/felixgborrego/gpc-pam-jit/pkg/pamjit"
 	"github.com/felixgborrego/gpc-pam-jit/pkg/slack"
@@ -17,15 +17,36 @@ var requestCmd = &cobra.Command{
 	Short: "Request an entitlement",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		projectID, err := cmd.Flags().GetString("project")
+		if err != nil {
+			return
+		}
+
+		folderID, err := cmd.Flags().GetString("folder")
+		if err != nil {
+			return
+		}
+
+		if (projectID == "" && folderID == "") || (projectID != "" && folderID != "") {
+			return
+		}
+
+		resourceID := projectID
+		resourceType := pamjit.ResourceTypeProject
+		if resourceID == "" {
+			resourceID = folderID
+			resourceType = pamjit.ResourceTypeFolder
+		}
+
 		options := &pamjit.RequestOptions{
 			EntitlementID: args[0],
-			ProjectID:     cmd.Flag("project").Value.String(),
 			Location:      cmd.Flag("location").Value.String(),
+			ResourceID:    resourceID,
 			Justification: cmd.Flag("justification").Value.String(),
 			Duration:      cmd.Flag("duration").Value.String(),
 		}
 
-		pam, err := pamjit.NewPamJitClient(context.Background(), options.ProjectID, options.Location)
+		pam, err := pamjit.NewPamJitClient(context.Background(), options.ResourceID, options.Location, resourceType)
 		if err != nil {
 			log.Fatalf("unable to use GCP JIT service: %v", err)
 		}
@@ -56,10 +77,9 @@ func init() {
 	rootCmd.AddCommand(requestCmd)
 
 	requestCmd.Flags().StringP("project", "p", "", "Project ID")
+	requestCmd.Flags().String("folder", "f", "Folder ID")
 	requestCmd.Flags().StringP("location", "l", "global", "Location")
 	requestCmd.Flags().StringP("justification", "j", "", "Justification")
 	requestCmd.Flags().StringP("duration", "d", "", "Duration (defaults to maximum)")
 
-	requestCmd.MarkFlagRequired("project")
-	requestCmd.MarkFlagRequired("justification")
 }
