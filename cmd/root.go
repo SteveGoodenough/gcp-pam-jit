@@ -8,9 +8,10 @@ import (
 )
 
 const longDescription = `
-This CLI allows you to request just-in-time permissions for GCP projects.
-Usage example:
+This CLI allows you to request just-in-time permissions for GCP projects or folders.
+Usage examples:
   gpc-jit entitlements --project my-project-id
+  gpc-jit entitlements --folder folder-id
 `
 
 var rootCmd = &cobra.Command{

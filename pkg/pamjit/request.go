@@ -1,18 +1,19 @@
 package pamjit
 
 import (
-	"cloud.google.com/go/privilegedaccessmanager/apiv1/privilegedaccessmanagerpb"
 	"context"
 	"fmt"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"cloud.google.com/go/privilegedaccessmanager/apiv1/privilegedaccessmanagerpb"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 type RequestOptions struct {
 	EntitlementID string
-	ProjectID     string
+	ResourceID    string
 	Location      string
 	Justification string
 	Duration      string
@@ -42,7 +43,7 @@ func (c *Client) RequestGrant(ctx context.Context, entitlementId, justification 
 		requestedDuration = entitlement.MaxRequestDuration
 	}
 
-	fmt.Printf("Requesting entitlement %s in project %s for %s\n", entitlementId, c.projectID, requestedDuration)
+	fmt.Printf("Requesting entitlement %s in %s %s for %s\n", entitlementId, c.resourceType, c.resourceID, requestedDuration)
 
 	req := &privilegedaccessmanagerpb.CreateGrantRequest{
 		Parent: entitlementFqn,
@@ -65,7 +66,10 @@ func (c *Client) RequestGrant(ctx context.Context, entitlementId, justification 
 
 	fmt.Printf("Grant request sent: %s\n", grant.GetState().String())
 
-	link := fmt.Sprintf("https://console.cloud.google.com/iam-admin/pam/grants/approvals?project=%s", c.projectID)
+	link := fmt.Sprintf("https://console.cloud.google.com/iam-admin/pam/grants/approvals?project=%s", c.resourceID)
+	if c.resourceType == ResourceTypeFolder {
+		link = fmt.Sprintf("https://console.cloud.google.com/iam-admin/pam/grants/approvals?family=folders&resource=%s", c.resourceID)
+	}
 
 	// only return link if the request requires approval
 	if grant.GetState().String() == "APPROVAL_AWAITED" {

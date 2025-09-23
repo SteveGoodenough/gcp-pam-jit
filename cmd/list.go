@@ -13,10 +13,16 @@ var listEntitlementCmd = &cobra.Command{
 	Use:   "entitlements",
 	Short: "List entitlements",
 	Run: func(cmd *cobra.Command, args []string) {
-		projectID, _ := cmd.Flags().GetString("project")
+		resourceType := pamjit.ResourceTypeProject
+		resourceID, _ := cmd.Flags().GetString("project")
+		if resourceID == "" {
+			resourceID, _ = cmd.Flags().GetString("folder")
+			resourceType = pamjit.ResourceTypeFolder
+		}
+
 		location, _ := cmd.Flags().GetString("location")
 
-		pam, err := pamjit.NewPamJitClient(context.Background(), projectID, location)
+		pam, err := pamjit.NewPamJitClient(context.Background(), resourceID, location, resourceType)
 		if err != nil {
 			log.Fatalf("unable to use GCP JIT service: %v", err)
 		}
@@ -33,4 +39,8 @@ func init() {
 	listEntitlementCmd.Flags().StringP("project", "p", "", "Project ID")
 	listEntitlementCmd.Flags().StringP("location", "l", "global", "Location")
 	_ = listEntitlementCmd.MarkFlagRequired("project")
+
+	listEntitlementCmd.Flags().StringP("folder", "p", "", "folder ID")
+	listEntitlementCmd.Flags().StringP("location", "l", "global", "Location")
+	_ = listEntitlementCmd.MarkFlagRequired("folder")
 }
