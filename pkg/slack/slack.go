@@ -22,7 +22,7 @@ func SendSlackMessage(cfg *config.Config, options *pamjit.RequestOptions, link s
 			slack.NewTextBlockObject("plain_text", ":lock: PAM Request", false, false),
 		),
 		slack.NewSectionBlock(
-			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("Entitlement: *%s*\nResource: *%s*\nRequested by: *%s*\nDuration: *%s*\nJustification: *%s*", options.EntitlementID, options.ProjectID, email, options.Duration, options.Justification), false, false),
+			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("Entitlement: *%s*\nResource: *%s*\nRequested by: *%s*\nDuration: *%s*\nJustification: *%s*", options.EntitlementID, options.ResourceID, email, options.Duration, options.Justification), false, false),
 			nil,
 			nil,
 		),

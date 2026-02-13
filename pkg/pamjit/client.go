@@ -10,22 +10,31 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+type ResourceType string
+
+const (
+	ResourceTypeProject ResourceType = "project"
+	ResourceTypeFolder  ResourceType = "folder"
+)
+
 type Client struct {
-	gcpClient *privilegedaccessmanager.Client
-	projectID string
-	location  string
+	gcpClient    *privilegedaccessmanager.Client
+	resourceID   string
+	resourceType ResourceType
+	location     string
 }
 
-func NewPamJitClient(ctx context.Context, projectID, location string) (*Client, error) {
+func NewPamJitClient(ctx context.Context, resourceID, location string, resourceType ResourceType) (*Client, error) {
 	pamClient, err := privilegedaccessmanager.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PAM client: %w", err)
 	}
 
 	client := &Client{
-		gcpClient: pamClient,
-		projectID: projectID,
-		location:  location,
+		gcpClient:    pamClient,
+		resourceID:   resourceID,
+		resourceType: resourceType,
+		location:     location,
 	}
 
 	if err := client.CheckOnboardingStatus(ctx); err != nil {
@@ -47,7 +56,7 @@ func (c *Client) CheckOnboardingStatus(ctx context.Context) error {
 	if err != nil {
 		if status.Code(err) == codes.PermissionDenied {
 			// Treat PermissionDenied as onboarded
-			return nil 
+			return nil
 		}
 		return fmt.Errorf("failed to check onboarding status: %w", err)
 	}
@@ -65,5 +74,9 @@ func (c *Client) CheckOnboardingStatus(ctx context.Context) error {
 
 // parent returns the resource name of the project and location.
 func (c *Client) parent() string {
-	return fmt.Sprintf("projects/%s/locations/%s", c.projectID, c.location)
+	if c.resourceType == ResourceTypeProject {
+		return fmt.Sprintf("projects/%s/locations/%s", c.resourceID, c.location)
+	}
+
+	return fmt.Sprintf("folders/%s/locations/%s", c.resourceID, c.location)
 }

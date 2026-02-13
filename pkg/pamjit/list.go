@@ -14,9 +14,9 @@ const (
 	pageSize = 10
 )
 
-// ShowEntitlements lists the entitlements for a given project ID and location.
+// ShowEntitlements lists the entitlements for a given project or folder ID and location.
 func (c *Client) ShowEntitlements(ctx context.Context) error {
-	fmt.Printf("Your current GCP user has the following entitlements for the project %s and location %s:\n\n", c.projectID, c.location)
+	fmt.Printf("Your current GCP user has the following entitlements for the %s %s and location %s:\n\n", c.resourceType, c.resourceID, c.location)
 
 	req := &privilegedaccessmanagerpb.ListEntitlementsRequest{
 		Parent: c.parent(),
